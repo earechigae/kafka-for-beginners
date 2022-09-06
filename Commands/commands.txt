@@ -1,0 +1,35 @@
+#How to start Zookeper and Kafka
+zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties & kafka-server-start /usr/local/etc/kafka/server.properties
+
+## -replication-factor is the number of copies of each partition
+kafka-topics --zookeeper 127.0.0.1:2181 --topic test --create --partitions 1 --replication-factor 1
+kafka-topics --bootstrap-server 127.0.0.1:9092 --topic test --create --partitions 1 --replication-factor 1
+kafka-topics --list --bootstrap-server localhost:9092
+
+kafka-console-producer --topic test --broker-list localhost:9092 < ./data/sample1.csv
+kafka-console-consumer --topic test --bootstrap-server localhost:9092  
+
+kafka-console-producer --topic test --broker-list localhost:9092 < ./data/sample2.csv
+kafka-console-consumer --topic test --bootstrap-server localhost:9092  
+
+#Multinode Kafka cluster
+cp /usr/local/etc/kafka/server.properties /usr/local/etc/kafka/server-0.properties
+cp /usr/local/etc/kafka/server.properties /usr/local/etc/kafka/server-1.properties
+cp /usr/local/etc/kafka/server.properties /usr/local/etc/kafka/server-2.properties
+
+
+zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties
+kafka-server-start /usr/local/etc/kafka/server-0.properties
+kafka-server-start /usr/local/etc/kafka/server-1.properties
+kafka-server-start /usr/local/etc/kafka/server-2.properties
+
+kafka-topics --bootstrap-server 127.0.0.1:9092 --topic stock-ticks --create --partitions 3 --replication-factor 1
+kafka-console-consumer --topic stock-ticks  --bootstrap-server localhost:9092 --from-beginning --group group1
+kafka-console-consumer --topic stock-ticks  --bootstrap-server localhost:9092 --from-beginning --group group1
+
+kafka-console-producer --topic stock-ticks --broker-list localhost:9092 < ./data/sample1.csv
+
+kafka-dump-log --files /usr/local/var/lib/kafka-logs-0/stock-ticks-0/00000000000000000000.log
+kafka-dump-log --files /usr/local/var/lib/kafka-logs-1/stock-ticks-2/00000000000000000000.log 
+kafka-dump-log --files /usr/local/var/lib/kafka-logs-2/stock-ticks-1/00000000000000000000.log 
+
